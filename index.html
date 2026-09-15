@@ -2,18 +2,21 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Хоккейное Мемори</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
             height: 100%;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
         }
 
         body {
@@ -187,7 +190,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.98);
             display: none;
             align-items: center;
             justify-content: center;
@@ -199,11 +202,46 @@
             animation: fadeIn 0.5s ease;
         }
 
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .video-overlay video {
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(220,20,60,0.8);
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .video-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(220, 20, 60, 0.9);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .video-close-btn:hover {
+            background: rgba(255, 36, 0, 1);
+            transform: scale(1.1);
         }
 
         h1 {
@@ -656,6 +694,22 @@
                 width: 35px;
                 height: 35px;
             }
+
+            .video-close-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1.8rem;
+                top: 15px;
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .video-close-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -666,14 +720,16 @@
     </div>
 
     <div class="video-overlay" id="videoOverlay">
-        <video id="winVideo" controls>
-            <source src="images/VIDEO.mp4" type="video/mp4">
-            <source src="images/VIDEO.webm" type="video/webm">
-            Ваш браузер не поддерживает видео.
-        </video>
+        <button class="video-close-btn" id="videoCloseBtn">×</button>
+        <div class="video-container">
+            <video id="winVideo" autoplay playsinline webkit-playsinline muted>
+                <source src="images/VIDEO.mp4" type="video/mp4">
+                <source src="images/VIDEO.webm" type="video/webm">
+            </video>
+        </div>
     </div>
 
-    <h1>🏒 Хоккейное Мемори</h1>
+    <h1> Хоккейное Мемори</h1>
 
     <div class="controls">
         <div class="level-selector" id="levelSelector">
@@ -719,7 +775,6 @@
             { rows: 4, cols: 4, name: '4×4', pairs: 8, hasLogo: false }
         ];
 
-        // ✅ ИСПРАВЛЕНО: bopot вместо borot
         const allImages = [
             'bopot', 'brat', 'chas', 'kep', 'kliu', 'kom',
             'kon1', 'kon2', 'krag', 'kub', 'logo', 'med',
@@ -730,13 +785,13 @@
             '🏒 Хоккей с шайбой зародился в Канаде в середине XIX века!',
             '⚡ Шайба может лететь со скоростью до 180 км/ч!',
             '🥅 Стандартные ворота в хоккее: 183 см в ширину и 122 см в высоту',
-            '🏆 Кубок Стэнли — старейший трофей в профессиональном спорте Северной Америки',
-            '⛸️ Коньки хоккеиста затачиваются под индивидуальный стиль игры',
-            '🔴 Шайба изготавливается из вулканизированной резины',
+            ' Кубок Стэнли — старейший трофей в профессиональном спорте Северной Америки',
+            '️ Коньки хоккеиста затачиваются под индивидуальный стиль игры',
+            ' Шайба изготавливается из вулканизированной резины',
             '📏 Длина хоккейной площадки: 60 метров, ширина: 30 метров',
             '👥 В хоккее одновременно на льду находятся 12 игроков (по 6 от каждой команды)',
             '🧊 Лёд на хоккейной площадке имеет толщину около 4 см',
-            '📊 Самая результативная игра в истории НХЛ закончилась со счётом 14:7',
+            ' Самая результативная игра в истории НХЛ закончилась со счётом 14:7',
             '⏱️ Стандартный матч состоит из трёх периодов по 20 минут',
             '🥅 Вратарская клюшка отличается от полевой — она шире'
         ];
@@ -1046,13 +1101,18 @@
             const videoOverlay = document.getElementById('videoOverlay');
             const winVideo = document.getElementById('winVideo');
             videoOverlay.classList.add('active');
+            
+            // Сброс и запуск видео
             winVideo.currentTime = 0;
-            winVideo.play();
+            winVideo.play().catch(e => console.log('Video play error:', e));
+        }
 
-            winVideo.onended = function() {
-                videoOverlay.classList.remove('active');
-                goToNextLevel();
-            };
+        function closeVideo() {
+            const videoOverlay = document.getElementById('videoOverlay');
+            const winVideo = document.getElementById('winVideo');
+            winVideo.pause();
+            videoOverlay.classList.remove('active');
+            goToNextLevel();
         }
 
         function goToNextLevel() {
@@ -1092,6 +1152,16 @@
             createBoard();
             createFlyingPucks();
             animatePucks();
+        });
+
+        // Закрытие видео
+        document.getElementById('videoCloseBtn').addEventListener('click', closeVideo);
+        
+        // Закрытие видео по клику на оверлей (но не на само видео)
+        document.getElementById('videoOverlay').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('video-container')) {
+                closeVideo();
+            }
         });
 
         document.querySelectorAll('.level-btn').forEach(btn => {
